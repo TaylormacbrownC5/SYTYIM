@@ -651,8 +651,7 @@ Rules:
 function setupQRView() {
   // Encode questions directly into the URL so no server storage is needed
   console.log('Questions to encode:', state.questions);
-  const jsonStr = JSON.stringify(state.questions);
-  const encoded = btoa(encodeURIComponent(jsonStr));
+  const encoded = encodeURIComponent(JSON.stringify(state.questions));
   const base = window.location.href.split('?')[0].split('#')[0];
   const url = base + '?q=' + encoded + '#candidate';
   state.candidateUrl = url;
@@ -811,8 +810,7 @@ window.addEventListener('load', () => {
     const encoded = params.get('q');
     if (encoded) {
       try {
-        const decoded = decodeURIComponent(atob(encoded));
-        state.questions = JSON.parse(decoded);
+        state.questions = JSON.parse(decodeURIComponent(encoded));
         console.log('Loaded', state.questions.length, 'questions from URL');
       } catch(e) {
         console.error('Failed to decode questions from URL:', e);
