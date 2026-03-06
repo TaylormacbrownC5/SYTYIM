@@ -635,23 +635,13 @@ Rules:
 - 10 to 15 questions total`;
 
 // ── QR SETUP ──
-async function setupQRView() {
-  // Generate a session ID and save questions to Netlify Blobs
-  const sessionId = Math.random().toString(36).slice(2) + Date.now().toString(36);
-  state.sessionId = sessionId;
-
-  try {
-    await fetch('/.netlify/functions/save-questions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId, questions: state.questions })
-    });
-  } catch(e) {
-    console.error('Failed to save questions:', e);
-  }
-
+function setupQRView() {
+  // Encode questions directly into the URL so no server storage is needed
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(state.questions))));
   const base = window.location.href.split('?')[0].split('#')[0];
-  const url = base + '?session=' + sessionId + '#candidate';
+  const url = base + '?q=' + encoded + '#candidate';
+  state.candidateUrl = url;
+
   document.getElementById('qr-url-display').textContent = url;
 
   document.getElementById('qr-container').innerHTML = '';
@@ -673,9 +663,7 @@ async function setupQRView() {
 }
 
 function copyLink() {
-  const base = window.location.href.split('?')[0].split('#')[0];
-  const url = base + '?session=' + state.sessionId + '#candidate';
-  navigator.clipboard.writeText(url).then(() => {
+  navigator.clipboard.writeText(state.candidateUrl).then(() => {
     const btn = document.getElementById('copy-btn');
     btn.textContent = '✓ Copied!';
     setTimeout(() => btn.textContent = 'Copy Link', 2000);
@@ -811,24 +799,17 @@ const DEMO_QUESTIONS = [
 ];
 
 // ── HANDLE HASH LINK ──
-window.addEventListener('load', async () => {
+window.addEventListener('load', () => {
   if (window.location.hash === '#candidate') {
     const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get('session');
-    if (sessionId) {
+    const encoded = params.get('q');
+    if (encoded) {
       try {
-        document.getElementById('loading-overlay').classList.add('show');
-        document.querySelector('.loading-msg').textContent = 'Loading your questions…';
-        document.querySelector('.loading-sub').textContent = 'Just a moment';
-        const resp = await fetch('/.netlify/functions/load-questions?session=' + sessionId);
-        if (resp.ok) {
-          const data = await resp.json();
-          state.questions = data.questions;
-        }
+        const decoded = decodeURIComponent(escape(atob(encoded)));
+        state.questions = JSON.parse(decoded);
+        console.log('Loaded', state.questions.length, 'questions from URL');
       } catch(e) {
-        console.error('Failed to load questions:', e);
-      } finally {
-        document.getElementById('loading-overlay').classList.remove('show');
+        console.error('Failed to decode questions from URL:', e);
       }
     }
     showView('candidate-entry');
