@@ -815,7 +815,7 @@ function nextQuestion() {
 // No demo questions — candidates must use the host's link
 
 // ── HANDLE HASH LINK ──
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   if (window.location.hash === '#candidate') {
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('s');
