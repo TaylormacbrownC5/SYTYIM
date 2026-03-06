@@ -1,9 +1,11 @@
-exports.handler = async (event, context) => {
-  const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type' };
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
+const { getStore } = require("@netlify/blobs");
+
+exports.handler = async (event) => {
+  const headers = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type" };
+  if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers, body: "" };
   try {
     const { sessionId, questions } = JSON.parse(event.body);
-    const store = context.blobs.getStore('questions');
+    const store = getStore("questions");
     await store.set(sessionId, JSON.stringify(questions));
     return { statusCode: 200, headers, body: JSON.stringify({ ok: true }) };
   } catch (err) {
