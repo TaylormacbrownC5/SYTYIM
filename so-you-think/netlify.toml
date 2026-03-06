@@ -1,6 +1,3 @@
 [functions]
   node_bundler = "esbuild"
-
-[[functions]]
-  path = "/netlify/functions/*"
   timeout = 30
