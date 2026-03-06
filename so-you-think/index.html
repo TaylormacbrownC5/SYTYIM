@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>So You Think You're Into Me</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --cream: #FAF6F0;
+    --warm: #F5EDE0;
+    --blush: #E8C4A0;
+    --terra: #C4714A;
+    --deep: #2C1810;
+    --mid: #7A4A30;
+    --light-mid: #B07050;
+    --ink: #1A0F0A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Noise texture overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.5;
+  }
+
+  /* ── VIEWS ── */
+  .view { display: none; min-height: 100vh; position: relative; z-index: 1; }
+  .view.active { display: flex; flex-direction: column; }
+
+  /* ── LANDING ── */
+  #landing {
+    align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 30% 20%, #E8C4A050 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, #C4714A20 0%, transparent 50%),
+                var(--cream);
+  }
+
+  .landing-inner { text-align: center; max-width: 540px; padding: 60px 32px; animation: fadeUp 1s ease both; }
+
+  .eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--terra);
+    margin-bottom: 24px;
+  }
+
+  h1.hero {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(42px, 8vw, 72px);
+    line-height: 1.05;
+    color: var(--deep);
+    margin-bottom: 20px;
+  }
+
+  h1.hero em { font-style: italic; color: var(--terra); }
+
+  .subtitle {
+    font-size: 16px; font-weight: 300; line-height: 1.7;
+    color: var(--mid); margin-bottom: 48px;
+  }
+
+  .btn-group { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+  .btn {
+    padding: 14px 32px; border-radius: 3px; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500; cursor: pointer; border: none;
+    transition: all 0.2s; letter-spacing: 0.05em;
+  }
+  .btn-primary {
+    background: var(--deep); color: var(--cream);
+  }
+  .btn-primary:hover { background: var(--terra); transform: translateY(-1px); box-shadow: 0 8px 24px #C4714A40; }
+  .btn-secondary {
+    background: transparent; color: var(--deep);
+    border: 1.5px solid var(--blush);
+  }
+  .btn-secondary:hover { border-color: var(--terra); color: var(--terra); }
+
+  /* ── DECORATIVE LINES ── */
+  .deco-line {
+    width: 48px; height: 1.5px; background: var(--blush);
+    margin: 32px auto;
+  }
+
+  /* ── HOST SETUP ── */
+  #host-setup {
+    background: var(--warm);
+    align-items: center; justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .card {
+    background: var(--cream); border: 1px solid var(--blush);
+    border-radius: 4px; padding: 48px;
+    max-width: 600px; width: 100%;
+    box-shadow: 0 2px 40px #2C181008;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; color: var(--deep); margin-bottom: 8px;
+  }
+  .card-sub { font-size: 14px; color: var(--light-mid); margin-bottom: 32px; }
+
+  label {
+    display: block; font-size: 12px; font-weight: 500;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--mid); margin-bottom: 8px;
+  }
+
+  .upload-zone {
+    border: 2px dashed var(--blush); border-radius: 4px;
+    padding: 40px; text-align: center; cursor: pointer;
+    transition: all 0.2s; margin-bottom: 24px;
+    position: relative; overflow: hidden;
+  }
+  .upload-zone:hover { border-color: var(--terra); background: #C4714A05; }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-icon { font-size: 32px; margin-bottom: 12px; }
+  .upload-text { font-size: 14px; color: var(--mid); }
+  .upload-text strong { color: var(--terra); }
+  .upload-hint { font-size: 12px; color: var(--blush); margin-top: 6px; }
+
+  .file-chosen { color: var(--terra); font-weight: 500; font-size: 14px; margin-top: 8px; }
+
+  textarea {
+    width: 100%; padding: 14px 16px;
+    border: 1.5px solid var(--blush); border-radius: 3px;
+    background: var(--cream); color: var(--ink);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    resize: vertical; min-height: 120px;
+    transition: border-color 0.2s; outline: none;
+    margin-bottom: 24px;
+  }
+  textarea:focus { border-color: var(--terra); }
+
+  .progress-wrap { margin-bottom: 24px; }
+  .progress-bar {
+    height: 3px; background: var(--blush); border-radius: 2px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--terra), var(--blush));
+    border-radius: 2px; transition: width 0.4s ease;
+    width: 0%;
+  }
+  .progress-label { font-size: 12px; color: var(--mid); margin-top: 8px; }
+
+  /* ── QR VIEW ── */
+  #host-qr {
+    align-items: center; justify-content: center;
+    background: var(--deep);
+    padding: 40px 20px;
+  }
+
+  .qr-card {
+    text-align: center;
+    max-width: 480px; width: 100%;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .qr-card .eyebrow { color: var(--blush); }
+  .qr-card .card-title { color: var(--cream); margin-bottom: 8px; }
+  .qr-card .card-sub { color: var(--blush); margin-bottom: 40px; }
+
+  #qr-container {
+    background: var(--cream); display: inline-block;
+    padding: 24px; border-radius: 4px; margin-bottom: 32px;
+  }
+
+  .qr-url {
+    background: #ffffff10; border: 1px solid #ffffff20;
+    border-radius: 3px; padding: 12px 20px;
+    font-size: 13px; color: var(--blush); word-break: break-all;
+    margin-bottom: 24px;
+  }
+
+  .questions-preview {
+    text-align: left; margin-top: 32px;
+    border-top: 1px solid #ffffff15; padding-top: 24px;
+  }
+  .questions-preview h3 {
+    font-family: 'Playfair Display', serif; font-size: 18px;
+    color: var(--cream); margin-bottom: 16px;
+  }
+  .q-item {
+    font-size: 13px; color: var(--blush); padding: 8px 0;
+    border-bottom: 1px solid #ffffff08;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .q-num { color: var(--terra); font-weight: 500; min-width: 24px; }
+
+  /* ── CANDIDATE ENTRY ── */
+  #candidate-entry {
+    align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 70% 30%, #E8C4A030, transparent 60%), var(--cream);
+    padding: 40px 20px;
+  }
+
+  input[type="text"], input[type="email"] {
+    width: 100%; padding: 14px 16px;
+    border: 1.5px solid var(--blush); border-radius: 3px;
+    background: var(--cream); color: var(--ink);
+    font-family: 'DM Sans', sans-serif; font-size: 16px;
+    transition: border-color 0.2s; outline: none;
+    margin-bottom: 20px;
+  }
+  input:focus { border-color: var(--terra); }
+
+  /* ── QUIZ ── */
+  #quiz {
+    align-items: center; justify-content: center;
+    background: var(--warm);
+    padding: 40px 20px;
+  }
+
+  .quiz-wrap {
+    max-width: 560px; width: 100%;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .quiz-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 32px;
+  }
+  .quiz-counter {
+    font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--mid);
+  }
+  .quiz-pips { display: flex; gap: 6px; }
+  .pip {
+    width: 24px; height: 3px; border-radius: 2px; background: var(--blush);
+    transition: background 0.3s;
+  }
+  .pip.done { background: var(--terra); }
+  .pip.active { background: var(--deep); }
+
+  .question-card {
+    background: var(--cream); border: 1px solid var(--blush);
+    border-radius: 4px; padding: 40px;
+    box-shadow: 0 2px 30px #2C181006;
+  }
+
+  .question-type {
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--terra); margin-bottom: 16px;
+  }
+
+  .question-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(20px, 4vw, 28px); line-height: 1.35;
+    color: var(--deep); margin-bottom: 32px;
+  }
+
+  .answer-options { display: flex; flex-direction: column; gap: 10px; }
+
+  .opt-btn {
+    padding: 14px 18px; border-radius: 3px; cursor: pointer;
+    border: 1.5px solid var(--blush); background: transparent;
+    text-align: left; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--ink); transition: all 0.15s;
+  }
+  .opt-btn:hover { border-color: var(--terra); background: #C4714A08; color: var(--terra); }
+  .opt-btn.selected { border-color: var(--terra); background: #C4714A12; color: var(--deep); font-weight: 500; }
+
+  .text-answer {
+    width: 100%; padding: 14px 16px;
+    border: 1.5px solid var(--blush); border-radius: 3px;
+    background: var(--cream); color: var(--ink);
+    font-family: 'DM Sans', sans-serif; font-size: 15px;
+    outline: none; resize: none; height: 100px;
+    transition: border-color 0.2s;
+  }
+  .text-answer:focus { border-color: var(--terra); }
+
+  .quiz-nav { margin-top: 24px; display: flex; justify-content: flex-end; }
+
+  /* ── THANK YOU ── */
+  #thankyou {
+    align-items: center; justify-content: center;
+    background: var(--deep);
+    text-align: center; padding: 40px 20px;
+  }
+
+  .ty-inner { max-width: 480px; animation: fadeUp 0.8s ease both; }
+
+  .ty-icon { font-size: 48px; margin-bottom: 24px; animation: pulse 2s ease infinite; }
+
+  .ty-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 6vw, 52px); color: var(--cream);
+    margin-bottom: 16px; line-height: 1.1;
+  }
+  .ty-title em { font-style: italic; color: var(--blush); }
+
+  .ty-sub { font-size: 16px; font-weight: 300; color: var(--blush); line-height: 1.7; }
+
+  /* ── LOADING OVERLAY ── */
+  #loading-overlay {
+    display: none; position: fixed; inset: 0;
+    background: var(--cream); z-index: 100;
+    flex-direction: column; align-items: center; justify-content: center;
+  }
+  #loading-overlay.show { display: flex; }
+
+  .loading-ring {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 2px solid var(--blush);
+    border-top-color: var(--terra);
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+  .loading-msg {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; color: var(--mid);
+  }
+  .loading-sub { font-size: 13px; color: var(--blush); margin-top: 8px; }
+
+  /* ── ERROR ── */
+  .error-msg {
+    background: #C4714A15; border: 1px solid var(--terra);
+    border-radius: 3px; padding: 12px 16px;
+    font-size: 13px; color: var(--terra); margin-bottom: 16px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  .fade-in { animation: fadeUp 0.4s ease both; }
+
+  /* ── BACK LINK ── */
+  .back-link {
+    position: absolute; top: 24px; left: 24px;
+    font-size: 13px; color: var(--light-mid); cursor: pointer;
+    text-decoration: none; display: flex; align-items: center; gap: 6px;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--terra); }
+
+  /* ── OR DIVIDER ── */
+  .or-divider {
+    display: flex; align-items: center; gap: 16px; margin: 20px 0;
+  }
+  .or-divider span { flex: 1; height: 1px; background: var(--blush); }
+  .or-divider p { font-size: 12px; color: var(--blush); letter-spacing: 0.1em; }
+
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-overlay">
+  <div class="loading-ring"></div>
+  <div class="loading-msg">Crafting your questions…</div>
+  <div class="loading-sub">Analyzing your dating resume</div>
+</div>
+
+<!-- VIEW: LANDING -->
+<div class="view active" id="landing">
+  <div class="landing-inner">
+    <p class="eyebrow">A curated search for connection</p>
+    <h1 class="hero">So You Think<br/>You're <em>Into Me?</em></h1>
+    <div class="deco-line"></div>
+    <p class="subtitle">Upload your dating resume. Let AI craft questions that find your true match. Share a QR code. Let the right people come to you.</p>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="showView('host-setup')">I'm the host →</button>
+      <button class="btn btn-secondary" onclick="showView('candidate-entry')">I received a link</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW: HOST SETUP -->
+<div class="view" id="host-setup">
+  <a class="back-link" onclick="showView('landing')">← Back</a>
+  <div style="display:flex;align-items:center;justify-content:center;flex:1;padding:40px 20px;">
+    <div class="card">
+      <p class="eyebrow" style="margin-bottom:12px;">Host Setup</p>
+      <h2 class="card-title">Your Dating Resume</h2>
+      <p class="card-sub">Upload a PDF/image or paste your resume text below. Claude will generate 10–15 questions to screen candidates on your behalf.</p>
+
+      <label>Upload Resume (PDF or Image)</label>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="resume-file" accept=".pdf,image/*" onchange="handleFileSelect(event)"/>
+        <div class="upload-icon">📄</div>
+        <div class="upload-text">Drop your file here or <strong>browse</strong></div>
+        <div class="upload-hint">PDF, JPG, PNG — max 10MB</div>
+      </div>
+      <div id="file-chosen" class="file-chosen" style="display:none;margin-bottom:20px;"></div>
+
+      <div class="or-divider"><span></span><p>OR TYPE IT OUT</p><span></span></div>
+
+      <label>Paste Resume Text</label>
+      <textarea id="resume-text" placeholder="Tell us about yourself — your values, lifestyle, what you're looking for, dealbreakers, hobbies, relationship goals…"></textarea>
+
+      <div class="error-msg" id="setup-error">Please upload a file or enter your resume text.</div>
+
+      <button class="btn btn-primary" style="width:100%" onclick="generateQuestions()">Generate My Questions →</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW: HOST QR -->
+<div class="view" id="host-qr">
+  <div style="display:flex;align-items:center;justify-content:center;flex:1;padding:40px 20px;">
+    <div class="qr-card">
+      <p class="eyebrow">Ready to share</p>
+      <h2 class="card-title" style="font-family:'Playfair Display',serif;font-size:32px;">Your screening is live.</h2>
+      <p class="card-sub">Have candidates scan this QR code or visit the link below.</p>
+
+      <div id="qr-container"></div>
+      <div class="qr-url" id="qr-url-display"></div>
+
+      <button class="btn btn-primary" onclick="copyLink()" id="copy-btn">Copy Link</button>
+
+      <div class="questions-preview">
+        <h3>Your Questions</h3>
+        <div id="questions-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW: CANDIDATE ENTRY -->
+<div class="view" id="candidate-entry">
+  <a class="back-link" onclick="showView('landing')">← Back</a>
+  <div style="display:flex;align-items:center;justify-content:center;flex:1;padding:40px 20px;">
+    <div class="card">
+      <p class="eyebrow" style="margin-bottom:12px;">You've been invited</p>
+      <h2 class="card-title">Let's get to know you</h2>
+      <p class="card-sub">Answer a few questions to see if there's a spark. It only takes a few minutes.</p>
+
+      <label>First Name</label>
+      <input type="text" id="cand-name" placeholder="Your first name"/>
+
+      <label>Email Address</label>
+      <input type="email" id="cand-email" placeholder="your@email.com"/>
+
+      <div class="error-msg" id="entry-error">Please fill in both fields with a valid email.</div>
+
+      <button class="btn btn-primary" style="width:100%" onclick="startQuiz()">Begin →</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW: QUIZ -->
+<div class="view" id="quiz">
+  <div style="display:flex;align-items:center;justify-content:center;flex:1;padding:40px 20px;">
+    <div class="quiz-wrap">
+      <div class="quiz-meta">
+        <span class="quiz-counter" id="quiz-counter">Question 1 of 12</span>
+        <div class="quiz-pips" id="quiz-pips"></div>
+      </div>
+      <div class="question-card">
+        <div class="question-type" id="q-type">Multiple Choice</div>
+        <div class="question-text" id="q-text"></div>
+        <div id="q-answers"></div>
+      </div>
+      <div class="quiz-nav">
+        <button class="btn btn-primary" id="next-btn" onclick="nextQuestion()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW: THANK YOU -->
+<div class="view" id="thankyou">
+  <div style="display:flex;align-items:center;justify-content:center;flex:1;">
+    <div class="ty-inner">
+      <div class="ty-icon">🌹</div>
+      <h2 class="ty-title">Thank you,<br/><em id="ty-name">friend</em>.</h2>
+      <div class="deco-line" style="background:#ffffff20;"></div>
+      <p class="ty-sub">Your answers have been noted. If the connection feels right, you'll be hearing from us soon.<br/><br/>Good things take time.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+const state = {
+  resumeFile: null,
+  resumeText: '',
+  questions: [],
+  currentQ: 0,
+  answers: [],
+  candidateName: '',
+  candidateEmail: '',
+};
+
+// ── VIEW SWITCHING ──
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ── FILE HANDLING ──
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  state.resumeFile = file;
+  const el = document.getElementById('file-chosen');
+  el.textContent = '✓ ' + file.name;
+  el.style.display = 'block';
+  document.getElementById('upload-zone').style.borderColor = 'var(--terra)';
+}
+
+// ── FILE → BASE64 ──
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = () => rej(new Error('Read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+// ── GENERATE QUESTIONS ──
+async function generateQuestions() {
+  const text = document.getElementById('resume-text').value.trim();
+  const errEl = document.getElementById('setup-error');
+
+  if (!state.resumeFile && !text) {
+    errEl.classList.add('show');
+    return;
+  }
+  errEl.classList.remove('show');
+
+  document.getElementById('loading-overlay').classList.add('show');
+
+  try {
+    let messages;
+
+    if (state.resumeFile) {
+      const b64 = await fileToBase64(state.resumeFile);
+      const mtype = state.resumeFile.type;
+      const isPdf = mtype === 'application/pdf';
+
+      const fileContent = isPdf
+        ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } }
+        : { type: 'image', source: { type: 'base64', media_type: mtype, data: b64 } };
+
+      messages = [{
+        role: 'user',
+        content: [
+          fileContent,
+          { type: 'text', text: PROMPT }
+        ]
+      }];
+    } else {
+      messages = [{
+        role: 'user',
+        content: PROMPT + '\n\nDating Resume:\n' + text
+      }];
+    }
+
+    const resp = await fetch('/.netlify/functions/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 3000, messages })
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error('Server error ' + resp.status + ': ' + errText);
+    }
+
+    const data = await resp.json();
+    if (!data.content) throw new Error('Bad response: ' + JSON.stringify(data));
+    const raw = data.content.map(b => b.text || '').join('');
+    const cleaned = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+    state.questions = parsed.questions;
+
+    document.getElementById('loading-overlay').classList.remove('show');
+    setupQRView();
+    showView('host-qr');
+
+  } catch(err) {
+    document.getElementById('loading-overlay').classList.remove('show');
+    document.getElementById('setup-error').textContent = 'Something went wrong: ' + err.message;
+    document.getElementById('setup-error').classList.add('show');
+  }
+}
+
+const PROMPT = `You are a relationship screening expert. Analyze this dating resume carefully and generate 10-15 insightful screening questions that will help determine if a candidate is a good match for this person.
+
+Return ONLY a valid JSON object with NO preamble, NO markdown, NO backticks — just raw JSON.
+
+Format:
+{
+  "questions": [
+    {
+      "text": "Question text here?",
+      "type": "multiple_choice",
+      "options": ["Option A", "Option B", "Option C", "Option D"]
+    },
+    {
+      "text": "Open-ended question?",
+      "type": "open_ended"
+    }
+  ]
+}
+
+Rules:
+- Mix of multiple_choice (70%) and open_ended (30%) questions
+- Questions should probe values, lifestyle, dealbreakers, compatibility — based on what matters to THIS person
+- Be specific and insightful, not generic
+- Multiple choice options should be balanced and non-judgmental in phrasing
+- Open-ended questions should invite genuine reflection
+- 10 to 15 questions total`;
+
+// ── QR SETUP ──
+function setupQRView() {
+  // Use the page URL with a hash to simulate candidate link
+  const url = window.location.href.split('#')[0] + '#candidate';
+  document.getElementById('qr-url-display').textContent = url;
+
+  document.getElementById('qr-container').innerHTML = '';
+  new QRCode(document.getElementById('qr-container'), {
+    text: url,
+    width: 200, height: 200,
+    colorDark: '#2C1810', colorLight: '#FAF6F0',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  const list = document.getElementById('questions-list');
+  list.innerHTML = '';
+  state.questions.forEach((q, i) => {
+    const el = document.createElement('div');
+    el.className = 'q-item';
+    el.innerHTML = `<span class="q-num">${i+1}.</span><span>${q.text}</span>`;
+    list.appendChild(el);
+  });
+}
+
+function copyLink() {
+  const url = window.location.href.split('#')[0] + '#candidate';
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = 'Copy Link', 2000);
+  });
+}
+
+// ── CANDIDATE ENTRY ──
+function startQuiz() {
+  const name = document.getElementById('cand-name').value.trim();
+  const email = document.getElementById('cand-email').value.trim();
+  const errEl = document.getElementById('entry-error');
+
+  if (!name || !email || !email.includes('@')) {
+    errEl.classList.add('show');
+    return;
+  }
+  errEl.classList.remove('show');
+
+  state.candidateName = name;
+  state.candidateEmail = email;
+  state.currentQ = 0;
+  state.answers = [];
+
+  // If no questions loaded yet (direct link), use demo questions
+  if (state.questions.length === 0) {
+    state.questions = DEMO_QUESTIONS;
+  }
+
+  buildPips();
+  loadQuestion(0);
+  showView('quiz');
+}
+
+// ── QUIZ LOGIC ──
+function buildPips() {
+  const container = document.getElementById('quiz-pips');
+  container.innerHTML = '';
+  state.questions.forEach((_, i) => {
+    const pip = document.createElement('div');
+    pip.className = 'pip' + (i === 0 ? ' active' : '');
+    pip.id = 'pip-' + i;
+    container.appendChild(pip);
+  });
+}
+
+function loadQuestion(idx) {
+  const q = state.questions[idx];
+  const total = state.questions.length;
+
+  document.getElementById('quiz-counter').textContent = `Question ${idx+1} of ${total}`;
+  document.getElementById('q-type').textContent = q.type === 'multiple_choice' ? 'Multiple Choice' : 'Open-Ended';
+
+  const textEl = document.getElementById('q-text');
+  textEl.className = 'question-text fade-in';
+  textEl.textContent = q.text;
+  void textEl.offsetWidth;
+
+  const ansEl = document.getElementById('q-answers');
+  ansEl.innerHTML = '';
+  ansEl.className = 'fade-in';
+
+  if (q.type === 'multiple_choice') {
+    const wrap = document.createElement('div');
+    wrap.className = 'answer-options';
+    q.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = opt;
+      btn.onclick = () => {
+        wrap.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        state.answers[idx] = opt;
+      };
+      wrap.appendChild(btn);
+    });
+    ansEl.appendChild(wrap);
+  } else {
+    const ta = document.createElement('textarea');
+    ta.className = 'text-answer';
+    ta.placeholder = 'Take your time…';
+    ta.value = state.answers[idx] || '';
+    ta.oninput = () => { state.answers[idx] = ta.value; };
+    ansEl.appendChild(ta);
+  }
+
+  // Update pips
+  document.querySelectorAll('.pip').forEach((p, i) => {
+    p.className = 'pip' + (i < idx ? ' done' : i === idx ? ' active' : '');
+  });
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = idx === total - 1 ? 'Submit ✓' : 'Next →';
+}
+
+function nextQuestion() {
+  const idx = state.currentQ;
+  const q = state.questions[idx];
+
+  // Validate
+  if (!state.answers[idx] || (typeof state.answers[idx] === 'string' && !state.answers[idx].trim())) {
+    // For open-ended, grab value
+    const ta = document.querySelector('.text-answer');
+    if (ta) state.answers[idx] = ta.value.trim();
+    if (!state.answers[idx]) {
+      const ta2 = document.querySelector('.text-answer');
+      if (ta2) { ta2.style.borderColor = 'var(--terra)'; setTimeout(() => ta2.style.borderColor = '', 1000); }
+      const opts = document.querySelector('.answer-options');
+      if (opts) { opts.style.opacity = '0.5'; setTimeout(() => opts.style.opacity = '', 500); }
+      return;
+    }
+  }
+
+  if (idx + 1 >= state.questions.length) {
+    // Done
+    document.getElementById('ty-name').textContent = state.candidateName;
+    showView('thankyou');
+  } else {
+    state.currentQ++;
+    loadQuestion(state.currentQ);
+  }
+}
+
+// ── DEMO QUESTIONS (fallback when no resume) ──
+const DEMO_QUESTIONS = [
+  { text: "How do you typically spend your weekends?", type: "multiple_choice", options: ["Outdoors & adventures", "Social gatherings", "Quiet time at home", "Mix of everything"] },
+  { text: "What does a healthy relationship look like to you?", type: "open_ended" },
+  { text: "How important is having shared interests with a partner?", type: "multiple_choice", options: ["Essential — we need the same hobbies", "Somewhat important", "I prefer complementary differences", "Not very important"] },
+  { text: "Where do you see yourself in 5 years?", type: "open_ended" },
+  { text: "How do you handle conflict in a relationship?", type: "multiple_choice", options: ["Talk it out immediately", "Need space first, then discuss", "Try to avoid conflict", "Depends on the situation"] },
+  { text: "What's your relationship with family?", type: "multiple_choice", options: ["Very close — family first", "Close but with healthy boundaries", "Somewhat distant by choice", "It's complicated"] },
+  { text: "What's a non-negotiable for you in a partner?", type: "open_ended" },
+  { text: "How do you feel about long-term commitment?", type: "multiple_choice", options: ["Ready and eager", "Open to it with the right person", "Unsure right now", "Taking things day by day"] },
+];
+
+// ── HANDLE HASH LINK ──
+window.addEventListener('load', () => {
+  if (window.location.hash === '#candidate') {
+    showView('candidate-entry');
+  }
+});
+</script>
+</body>
+</html>
