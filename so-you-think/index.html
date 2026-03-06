@@ -649,11 +649,13 @@ Rules:
 
 // ── QR SETUP ──
 function setupQRView() {
-  // Encode questions directly into the URL so no server storage is needed
-  console.log('Questions to encode:', state.questions);
-  const encoded = encodeURIComponent(JSON.stringify(state.questions));
+  // Store questions in sessionStorage and use a short key in the URL
+  const sessionKey = 'sytyim_' + Date.now();
+  sessionStorage.setItem(sessionKey, JSON.stringify(state.questions));
+  state.sessionKey = sessionKey;
+
   const base = window.location.href.split('?')[0].split('#')[0];
-  const url = base + '?q=' + encoded + '#candidate';
+  const url = base + '?k=' + sessionKey + '#candidate';
   state.candidateUrl = url;
 
   document.getElementById('qr-url-display').textContent = url;
@@ -807,13 +809,18 @@ function nextQuestion() {
 window.addEventListener('load', () => {
   if (window.location.hash === '#candidate') {
     const params = new URLSearchParams(window.location.search);
-    const encoded = params.get('q');
-    if (encoded) {
+    const key = params.get('k');
+    if (key) {
       try {
-        state.questions = JSON.parse(decodeURIComponent(encoded));
-        console.log('Loaded', state.questions.length, 'questions from URL');
+        const stored = sessionStorage.getItem(key);
+        if (stored) {
+          state.questions = JSON.parse(stored);
+          console.log('Loaded', state.questions.length, 'questions from storage');
+        } else {
+          console.warn('No questions found for key:', key);
+        }
       } catch(e) {
-        console.error('Failed to decode questions from URL:', e);
+        console.error('Failed to load questions:', e);
       }
     }
     showView('candidate-entry');
