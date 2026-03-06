@@ -590,6 +590,7 @@ async function generateQuestions() {
     }
 
     const data = await resp.json();
+    console.log('RAW API RESPONSE:', JSON.stringify(data));
     if (!data.content) throw new Error('Bad response: ' + JSON.stringify(data));
     const raw = data.content.map(b => b.text || '').join('');
     const cleaned = raw.replace(/```json[\s\S]*?```|```/g, '').trim();
