@@ -591,38 +591,23 @@ async function generateQuestions() {
 
     const data = await resp.json();
     if (!data.content) throw new Error('Bad response: ' + JSON.stringify(data));
-    const raw = data.content.map(b => b.text || '').join('');
 
-    // Clean up escaped newlines and extract JSON
-    const cleaned = raw
-      .replace(/\\n/g, ' ')
-      .replace(/\n/g, ' ')
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
-      .trim();
-
-    let parsed;
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch(e) {
-      // Extract just the JSON object/array portion
-      const objMatch = cleaned.match(/\{[^]*\}/);
-      const arrMatch = cleaned.match(/\[[^]*\]/);
-      const match = objMatch || arrMatch;
-      if (!match) throw new Error('Could not parse questions. Raw: ' + cleaned.slice(0, 300));
-      parsed = JSON.parse(match[0]);
+    // Get the raw text from the response
+    let raw = '';
+    for (const block of data.content) {
+      if (block.type === 'text') raw += block.text;
     }
 
-    // Handle both {questions: [...]} and plain array
-    if (Array.isArray(parsed)) {
-      state.questions = parsed;
-    } else if (parsed.questions && Array.isArray(parsed.questions)) {
-      state.questions = parsed.questions;
-    } else {
-      throw new Error('Unexpected format: ' + JSON.stringify(parsed).slice(0, 200));
-    }
+    // Find the JSON object in the text - look for { ... } containing "questions"
+    const start = raw.indexOf('{');
+    const end = raw.lastIndexOf('}');
+    if (start === -1 || end === -1) throw new Error('No JSON found in response');
+    const jsonStr = raw.slice(start, end + 1);
 
-    if (state.questions.length === 0) throw new Error('No questions generated. Please try again.');
+    const parsed = JSON.parse(jsonStr);
+    state.questions = parsed.questions;
+
+    if (!state.questions || state.questions.length === 0) throw new Error('No questions generated. Please try again.');
 
     document.getElementById('loading-overlay').classList.remove('show');
     setupQRView();
