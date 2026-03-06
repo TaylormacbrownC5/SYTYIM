@@ -403,6 +403,17 @@
       <h2 class="card-title">Your Dating Resume</h2>
       <p class="card-sub">Upload a PDF/image or paste your resume text below. Claude will generate 10–15 questions to screen candidates on your behalf.</p>
 
+      <label>Your Name</label>
+      <input type="text" id="host-name" placeholder="Your first name" style="margin-bottom:20px;"/>
+
+      <label>How should we notify you when someone completes the quiz?</label>
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <button class="opt-btn" id="notify-email-btn" onclick="selectNotify('email')" style="flex:1;text-align:center;">📧 Email</button>
+        <button class="opt-btn" id="notify-sms-btn" onclick="selectNotify('sms')" style="flex:1;text-align:center;">📱 SMS</button>
+      </div>
+      <input type="email" id="host-email" placeholder="your@email.com" style="display:none;margin-bottom:20px;"/>
+      <input type="tel" id="host-phone" placeholder="+1 (555) 000-0000" style="display:none;margin-bottom:20px;"/>
+
       <label>Upload Resume (PDF or Image)</label>
       <div class="upload-zone" id="upload-zone">
         <input type="file" id="resume-file" accept=".pdf,image/*" onchange="handleFileSelect(event)"/>
@@ -457,10 +468,15 @@
       <label>First Name</label>
       <input type="text" id="cand-name" placeholder="Your first name"/>
 
-      <label>Email Address</label>
-      <input type="email" id="cand-email" placeholder="your@email.com"/>
+      <label>How would you like to be contacted if there's a connection?</label>
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <button class="opt-btn" id="cand-email-btn" onclick="selectCandContact('email')" style="flex:1;text-align:center;">📧 Email</button>
+        <button class="opt-btn" id="cand-sms-btn" onclick="selectCandContact('sms')" style="flex:1;text-align:center;">📱 Phone</button>
+      </div>
+      <input type="email" id="cand-email" placeholder="your@email.com" style="display:none;margin-bottom:20px;"/>
+      <input type="tel" id="cand-phone" placeholder="+1 (555) 000-0000" style="display:none;margin-bottom:20px;"/>
 
-      <div class="error-msg" id="entry-error">Please fill in both fields with a valid email.</div>
+      <div class="error-msg" id="entry-error">Please fill in your name and contact info.</div>
 
       <button class="btn btn-primary" style="width:100%" onclick="startQuiz()">Begin →</button>
     </div>
@@ -491,10 +507,10 @@
 <div class="view" id="thankyou">
   <div style="display:flex;align-items:center;justify-content:center;flex:1;">
     <div class="ty-inner">
-      <div class="ty-icon">🌹</div>
+      <div class="ty-icon" id="ty-icon">🌹</div>
       <h2 class="ty-title">Thank you,<br/><em id="ty-name">friend</em>.</h2>
       <div class="deco-line" style="background:#ffffff20;"></div>
-      <p class="ty-sub">Your answers have been noted. If the connection feels right, you'll be hearing from us soon.<br/><br/>Good things take time.</p>
+      <p class="ty-sub" id="ty-sub">Your answers have been noted. If the connection feels right, you'll be hearing from us soon.<br/><br/>Good things take time.</p>
     </div>
   </div>
 </div>
@@ -509,6 +525,13 @@ const state = {
   answers: [],
   candidateName: '',
   candidateEmail: '',
+  candidatePhone: '',
+  candidateContactType: '',
+  hostName: '',
+  hostEmail: '',
+  hostPhone: '',
+  hostNotifyType: '',
+  binId: '',
 };
 
 // ── VIEW SWITCHING ──
@@ -516,6 +539,23 @@ function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
+}
+
+// ── NOTIFY SELECTOR ──
+function selectNotify(type) {
+  state.hostNotifyType = type;
+  document.getElementById('notify-email-btn').classList.toggle('selected', type === 'email');
+  document.getElementById('notify-sms-btn').classList.toggle('selected', type === 'sms');
+  document.getElementById('host-email').style.display = type === 'email' ? 'block' : 'none';
+  document.getElementById('host-phone').style.display = type === 'sms' ? 'block' : 'none';
+}
+
+function selectCandContact(type) {
+  state.candidateContactType = type;
+  document.getElementById('cand-email-btn').classList.toggle('selected', type === 'email');
+  document.getElementById('cand-sms-btn').classList.toggle('selected', type === 'sms');
+  document.getElementById('cand-email').style.display = type === 'email' ? 'block' : 'none';
+  document.getElementById('cand-phone').style.display = type === 'sms' ? 'block' : 'none';
 }
 
 // ── FILE HANDLING ──
@@ -543,11 +583,19 @@ function fileToBase64(file) {
 async function generateQuestions() {
   const text = document.getElementById('resume-text').value.trim();
   const errEl = document.getElementById('setup-error');
+  const hostName = document.getElementById('host-name').value.trim();
+  const hostEmail = document.getElementById('host-email').value.trim();
+  const hostPhone = document.getElementById('host-phone').value.trim();
 
-  if (!state.resumeFile && !text) {
-    errEl.classList.add('show');
-    return;
-  }
+  if (!hostName) { errEl.textContent = 'Please enter your name.'; errEl.classList.add('show'); return; }
+  if (!state.hostNotifyType) { errEl.textContent = 'Please choose how you want to be notified.'; errEl.classList.add('show'); return; }
+  if (state.hostNotifyType === 'email' && !hostEmail.includes('@')) { errEl.textContent = 'Please enter a valid email.'; errEl.classList.add('show'); return; }
+  if (state.hostNotifyType === 'sms' && !hostPhone) { errEl.textContent = 'Please enter your phone number.'; errEl.classList.add('show'); return; }
+  if (!state.resumeFile && !text) { errEl.textContent = 'Please upload a file or enter your resume text.'; errEl.classList.add('show'); return; }
+
+  state.hostName = hostName;
+  state.hostEmail = hostEmail;
+  state.hostPhone = hostPhone;
   errEl.classList.remove('show');
 
   document.getElementById('loading-overlay').classList.add('show');
@@ -652,16 +700,24 @@ async function setupQRView() {
   const sessionId = 'q' + Date.now().toString(36);
   state.sessionId = sessionId;
 
-  // Save questions to JSONBin via Netlify function
+  // Save questions + host info to JSONBin via Netlify function
   let binId = sessionId;
   try {
     const saveResp = await fetch('/.netlify/functions/save-questions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId, questions: state.questions })
+      body: JSON.stringify({
+        sessionId,
+        questions: state.questions,
+        hostName: state.hostName,
+        hostEmail: state.hostEmail,
+        hostPhone: state.hostPhone,
+        hostNotifyType: state.hostNotifyType
+      })
     });
     const saveData = await saveResp.json();
     if (saveData.binId) binId = saveData.binId;
+    state.binId = binId;
     console.log('Saved with binId:', binId);
   } catch(e) {
     console.error('Save failed:', e);
@@ -703,20 +759,21 @@ function copyLink() {
 function startQuiz() {
   const name = document.getElementById('cand-name').value.trim();
   const email = document.getElementById('cand-email').value.trim();
+  const phone = document.getElementById('cand-phone').value.trim();
   const errEl = document.getElementById('entry-error');
 
-  if (!name || !email || !email.includes('@')) {
-    errEl.classList.add('show');
-    return;
-  }
+  if (!name) { errEl.classList.add('show'); return; }
+  if (!state.candidateContactType) { errEl.classList.add('show'); return; }
+  if (state.candidateContactType === 'email' && !email.includes('@')) { errEl.classList.add('show'); return; }
+  if (state.candidateContactType === 'sms' && !phone) { errEl.classList.add('show'); return; }
   errEl.classList.remove('show');
 
   state.candidateName = name;
   state.candidateEmail = email;
+  state.candidatePhone = phone;
   state.currentQ = 0;
   state.answers = [];
 
-  // If no questions loaded, show error
   if (state.questions.length === 0) {
     alert('Questions could not be loaded. Please use the link provided by your host.');
     return;
@@ -807,9 +864,10 @@ function nextQuestion() {
   }
 
   if (idx + 1 >= state.questions.length) {
-    // Done
+    // Done — submit results
     document.getElementById('ty-name').textContent = state.candidateName;
     showView('thankyou');
+    submitResults();
   } else {
     state.currentQ++;
     loadQuestion(state.currentQ);
@@ -817,6 +875,35 @@ function nextQuestion() {
 }
 
 // No demo questions — candidates must use the host's link
+
+// ── SUBMIT RESULTS ──
+async function submitResults() {
+  try {
+    const payload = {
+      binId: state.binId,
+      candidateName: state.candidateName,
+      candidateEmail: state.candidateEmail,
+      candidatePhone: state.candidatePhone,
+      candidateContactType: state.candidateContactType,
+      questions: state.questions,
+      answers: state.answers,
+    };
+
+    const resp = await fetch('/.netlify/functions/submit-results', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await resp.json();
+    if (data.resultsUrl) {
+      document.getElementById('ty-sub').innerHTML =
+        'Your answers have been noted. If the connection feels right, you'll be hearing from us soon.<br/><br/>Good things take time.';
+    }
+  } catch(e) {
+    console.error('Submit failed:', e);
+  }
+}
 
 // ── HANDLE HASH LINK ──
 window.addEventListener('load', async () => {
@@ -832,6 +919,11 @@ window.addEventListener('load', async () => {
         if (resp.ok) {
           const data = await resp.json();
           if (data.questions) state.questions = data.questions;
+          if (data.hostName) state.hostName = data.hostName;
+          if (data.hostEmail) state.hostEmail = data.hostEmail;
+          if (data.hostPhone) state.hostPhone = data.hostPhone;
+          if (data.hostNotifyType) state.hostNotifyType = data.hostNotifyType;
+          state.binId = sessionId;
         }
       } catch(e) {
         console.error('Failed to load questions:', e);
