@@ -898,7 +898,7 @@ async function submitResults() {
     const data = await resp.json();
     if (data.resultsUrl) {
       document.getElementById('ty-sub').innerHTML =
-        'Your answers have been noted. If the connection feels right, you'll be hearing from us soon.<br/><br/>Good things take time.';
+        'Your answers have been noted. If the connection feels right, you\'ll be hearing from us soon.<br/><br/>Good things take time.';
     }
   } catch(e) {
     console.error('Submit failed:', e);
