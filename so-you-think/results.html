@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Match Results — So You Think You're Into Me</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --cream: #FAF6F0; --warm: #F5EDE0; --blush: #E8C4A0;
+    --terra: #C4714A; --deep: #2C1810; --mid: #7A4A30;
+    --light-mid: #B07050; --ink: #1A0F0A;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+
+  .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+  .ring { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--blush); border-top-color: var(--terra); animation: spin 1s linear infinite; margin-bottom: 20px; }
+  .loading-msg { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--mid); }
+
+  .page { max-width: 680px; margin: 0 auto; padding: 40px 24px 80px; animation: fadeUp 0.6s ease both; }
+
+  .back-badge {
+    display: inline-block; font-size: 12px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--terra); margin-bottom: 32px;
+  }
+
+  .candidate-header { margin-bottom: 40px; }
+  .candidate-header .eyebrow { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--terra); margin-bottom: 12px; }
+  .candidate-header h1 { font-family: 'Playfair Display', serif; font-size: clamp(28px, 5vw, 42px); color: var(--deep); margin-bottom: 8px; }
+  .candidate-header .submitted { font-size: 13px; color: var(--light-mid); }
+
+  /* Score card */
+  .score-card {
+    background: var(--deep); border-radius: 4px; padding: 36px;
+    margin-bottom: 32px; text-align: center; position: relative; overflow: hidden;
+  }
+  .score-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 50%, #C4714A30, transparent 60%);
+  }
+  .score-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 80px; font-weight: 700; color: var(--blush);
+    line-height: 1; margin-bottom: 8px; position: relative;
+  }
+  .score-number span { font-size: 32px; color: var(--terra); }
+  .score-rating {
+    font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cream); margin-bottom: 20px; position: relative;
+  }
+  .score-bar-wrap { background: #ffffff15; border-radius: 2px; height: 4px; margin-bottom: 24px; position: relative; }
+  .score-bar { height: 100%; background: linear-gradient(90deg, var(--terra), var(--blush)); border-radius: 2px; transition: width 1s ease; }
+  .score-summary { font-size: 15px; color: var(--blush); line-height: 1.7; position: relative; font-weight: 300; }
+
+  /* Highlights & Considerations */
+  .section { margin-bottom: 32px; }
+  .section-title {
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--terra); margin-bottom: 16px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--blush);
+  }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag {
+    padding: 6px 14px; border-radius: 2px; font-size: 13px;
+    border: 1px solid var(--blush); color: var(--mid);
+  }
+  .tag.highlight { background: #C4714A12; border-color: var(--terra); color: var(--terra); }
+  .tag.consideration { background: var(--warm); }
+
+  /* Q&A */
+  .qa-item {
+    padding: 20px 0; border-bottom: 1px solid var(--warm);
+  }
+  .qa-item:last-child { border-bottom: none; }
+  .qa-q { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--light-mid); margin-bottom: 8px; }
+  .qa-a { font-size: 15px; color: var(--deep); line-height: 1.6; }
+
+  /* Contact */
+  .contact-card {
+    background: var(--warm); border: 1px solid var(--blush); border-radius: 4px;
+    padding: 24px; margin-bottom: 32px;
+  }
+  .contact-card h3 { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--deep); margin-bottom: 12px; }
+  .contact-info { font-size: 15px; color: var(--mid); }
+  .contact-info strong { color: var(--terra); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading">
+  <div class="ring"></div>
+  <div class="loading-msg">Loading results…</div>
+</div>
+
+<div class="page" id="page" style="display:none">
+  <p class="back-badge">So You Think You're Into Me — Match Results</p>
+
+  <div class="candidate-header">
+    <p class="eyebrow">Candidate Profile</p>
+    <h1 id="res-name">—</h1>
+    <p class="submitted" id="res-date">—</p>
+  </div>
+
+  <div class="score-card">
+    <div class="score-number" id="res-score">—<span>/100</span></div>
+    <div class="score-rating" id="res-rating">—</div>
+    <div class="score-bar-wrap"><div class="score-bar" id="res-bar" style="width:0%"></div></div>
+    <div class="score-summary" id="res-summary">—</div>
+  </div>
+
+  <div class="contact-card">
+    <h3>How to Reach Them</h3>
+    <div class="contact-info" id="res-contact">—</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Highlights</div>
+    <div class="tag-list" id="res-highlights"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Things to Consider</div>
+    <div class="tag-list" id="res-considerations"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Their Answers</div>
+    <div id="res-qa"></div>
+  </div>
+</div>
+
+<script>
+async function loadResults() {
+  const params = new URLSearchParams(window.location.search);
+  const binId = params.get('r');
+  if (!binId) { document.querySelector('.loading-msg').textContent = 'No results ID found.'; return; }
+
+  try {
+    const resp = await fetch('/.netlify/functions/load-results?r=' + binId);
+    if (!resp.ok) throw new Error('Not found');
+    const data = await resp.json();
+    const r = data.record;
+
+    document.getElementById('res-name').textContent = r.candidateName;
+    document.getElementById('res-date').textContent = 'Submitted ' + new Date(r.submittedAt).toLocaleString();
+
+    const a = r.assessment;
+    document.getElementById('res-score').innerHTML = a.score + '<span>/100</span>';
+    document.getElementById('res-rating').textContent = a.rating;
+    document.getElementById('res-summary').textContent = a.summary;
+    setTimeout(() => { document.getElementById('res-bar').style.width = a.score + '%'; }, 100);
+
+    // Contact
+    const contact = r.candidateContactType === 'email'
+      ? `<strong>Email:</strong> ${r.candidateEmail}`
+      : `<strong>Phone:</strong> ${r.candidatePhone}`;
+    document.getElementById('res-contact').innerHTML = contact;
+
+    // Highlights
+    const hlEl = document.getElementById('res-highlights');
+    (a.highlights || []).forEach(h => {
+      const t = document.createElement('div');
+      t.className = 'tag highlight'; t.textContent = h; hlEl.appendChild(t);
+    });
+
+    // Considerations
+    const coEl = document.getElementById('res-considerations');
+    (a.considerations || []).forEach(c => {
+      const t = document.createElement('div');
+      t.className = 'tag consideration'; t.textContent = c; coEl.appendChild(t);
+    });
+
+    // Q&A
+    const qaEl = document.getElementById('res-qa');
+    r.questions.forEach((q, i) => {
+      const div = document.createElement('div');
+      div.className = 'qa-item';
+      div.innerHTML = `<div class="qa-q">${q.text}</div><div class="qa-a">${r.answers[i] || '<em>No answer</em>'}</div>`;
+      qaEl.appendChild(div);
+    });
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('page').style.display = 'block';
+
+  } catch(e) {
+    document.querySelector('.loading-msg').textContent = 'Could not load results: ' + e.message;
+  }
+}
+
+loadResults();
+</script>
+</body>
+</html>
