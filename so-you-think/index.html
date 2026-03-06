@@ -650,6 +650,7 @@ Rules:
 // ── QR SETUP ──
 function setupQRView() {
   // Encode questions directly into the URL so no server storage is needed
+  console.log('Questions to encode:', state.questions);
   const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(state.questions))));
   const base = window.location.href.split('?')[0].split('#')[0];
   const url = base + '?q=' + encoded + '#candidate';
@@ -700,9 +701,10 @@ function startQuiz() {
   state.currentQ = 0;
   state.answers = [];
 
-  // If no questions loaded yet (direct link), use demo questions
+  // If no questions loaded, show error
   if (state.questions.length === 0) {
-    state.questions = DEMO_QUESTIONS;
+    alert('Questions could not be loaded. Please use the link provided by your host.');
+    return;
   }
 
   buildPips();
@@ -799,17 +801,7 @@ function nextQuestion() {
   }
 }
 
-// ── DEMO QUESTIONS (fallback when no resume) ──
-const DEMO_QUESTIONS = [
-  { text: "How do you typically spend your weekends?", type: "multiple_choice", options: ["Outdoors & adventures", "Social gatherings", "Quiet time at home", "Mix of everything"] },
-  { text: "What does a healthy relationship look like to you?", type: "open_ended" },
-  { text: "How important is having shared interests with a partner?", type: "multiple_choice", options: ["Essential — we need the same hobbies", "Somewhat important", "I prefer complementary differences", "Not very important"] },
-  { text: "Where do you see yourself in 5 years?", type: "open_ended" },
-  { text: "How do you handle conflict in a relationship?", type: "multiple_choice", options: ["Talk it out immediately", "Need space first, then discuss", "Try to avoid conflict", "Depends on the situation"] },
-  { text: "What's your relationship with family?", type: "multiple_choice", options: ["Very close — family first", "Close but with healthy boundaries", "Somewhat distant by choice", "It's complicated"] },
-  { text: "What's a non-negotiable for you in a partner?", type: "open_ended" },
-  { text: "How do you feel about long-term commitment?", type: "multiple_choice", options: ["Ready and eager", "Open to it with the right person", "Unsure right now", "Taking things day by day"] },
-];
+// No demo questions — candidates must use the host's link
 
 // ── HANDLE HASH LINK ──
 window.addEventListener('load', () => {
