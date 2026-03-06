@@ -652,19 +652,23 @@ async function setupQRView() {
   const sessionId = 'q' + Date.now().toString(36);
   state.sessionId = sessionId;
 
-  // Save questions to Netlify function
+  // Save questions to JSONBin via Netlify function
+  let binId = sessionId;
   try {
-    await fetch('/.netlify/functions/save-questions', {
+    const saveResp = await fetch('/.netlify/functions/save-questions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId, questions: state.questions })
     });
+    const saveData = await saveResp.json();
+    if (saveData.binId) binId = saveData.binId;
+    console.log('Saved with binId:', binId);
   } catch(e) {
     console.error('Save failed:', e);
   }
 
   const base = window.location.href.split('?')[0].split('#')[0];
-  const url = base + '?s=' + sessionId + '#candidate';
+  const url = base + '?s=' + binId + '#candidate';
   state.candidateUrl = url;
 
   document.getElementById('qr-url-display').textContent = url;
