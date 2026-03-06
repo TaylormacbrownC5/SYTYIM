@@ -648,14 +648,23 @@ Rules:
 - 10 to 15 questions total`;
 
 // ── QR SETUP ──
-function setupQRView() {
-  // Store questions in sessionStorage and use a short key in the URL
-  const sessionKey = 'sytyim_' + Date.now();
-  sessionStorage.setItem(sessionKey, JSON.stringify(state.questions));
-  state.sessionKey = sessionKey;
+async function setupQRView() {
+  const sessionId = 'q' + Date.now().toString(36);
+  state.sessionId = sessionId;
+
+  // Save questions to Netlify function
+  try {
+    await fetch('/.netlify/functions/save-questions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, questions: state.questions })
+    });
+  } catch(e) {
+    console.error('Save failed:', e);
+  }
 
   const base = window.location.href.split('?')[0].split('#')[0];
-  const url = base + '?k=' + sessionKey + '#candidate';
+  const url = base + '?s=' + sessionId + '#candidate';
   state.candidateUrl = url;
 
   document.getElementById('qr-url-display').textContent = url;
@@ -809,18 +818,21 @@ function nextQuestion() {
 window.addEventListener('load', () => {
   if (window.location.hash === '#candidate') {
     const params = new URLSearchParams(window.location.search);
-    const key = params.get('k');
-    if (key) {
+    const sessionId = params.get('s');
+    if (sessionId) {
       try {
-        const stored = sessionStorage.getItem(key);
-        if (stored) {
-          state.questions = JSON.parse(stored);
-          console.log('Loaded', state.questions.length, 'questions from storage');
-        } else {
-          console.warn('No questions found for key:', key);
+        document.getElementById('loading-overlay').classList.add('show');
+        document.querySelector('.loading-msg').textContent = 'Loading your questions…';
+        document.querySelector('.loading-sub').textContent = 'Just a moment';
+        const resp = await fetch('/.netlify/functions/load-questions?s=' + sessionId);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.questions) state.questions = data.questions;
         }
       } catch(e) {
         console.error('Failed to load questions:', e);
+      } finally {
+        document.getElementById('loading-overlay').classList.remove('show');
       }
     }
     showView('candidate-entry');
