@@ -590,18 +590,26 @@ async function generateQuestions() {
     }
 
     const data = await resp.json();
-    console.log('RAW API RESPONSE:', JSON.stringify(data));
     if (!data.content) throw new Error('Bad response: ' + JSON.stringify(data));
     const raw = data.content.map(b => b.text || '').join('');
-    const cleaned = raw.replace(/```json[\s\S]*?```|```/g, '').trim();
+
+    // Clean up escaped newlines and extract JSON
+    const cleaned = raw
+      .replace(/\\n/g, ' ')
+      .replace(/\n/g, ' ')
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
 
     let parsed;
     try {
       parsed = JSON.parse(cleaned);
     } catch(e) {
-      // Try extracting JSON object from the text
-      const match = cleaned.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error('Could not find JSON in response: ' + cleaned.slice(0, 200));
+      // Extract just the JSON object/array portion
+      const objMatch = cleaned.match(/\{[^]*\}/);
+      const arrMatch = cleaned.match(/\[[^]*\]/);
+      const match = objMatch || arrMatch;
+      if (!match) throw new Error('Could not parse questions. Raw: ' + cleaned.slice(0, 300));
       parsed = JSON.parse(match[0]);
     }
 
@@ -611,10 +619,10 @@ async function generateQuestions() {
     } else if (parsed.questions && Array.isArray(parsed.questions)) {
       state.questions = parsed.questions;
     } else {
-      throw new Error('Unexpected response shape: ' + JSON.stringify(parsed).slice(0, 200));
+      throw new Error('Unexpected format: ' + JSON.stringify(parsed).slice(0, 200));
     }
 
-    if (state.questions.length === 0) throw new Error('No questions were generated. Please try again.');
+    if (state.questions.length === 0) throw new Error('No questions generated. Please try again.');
 
     document.getElementById('loading-overlay').classList.remove('show');
     setupQRView();
