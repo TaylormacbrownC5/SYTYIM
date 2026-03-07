@@ -6,6 +6,7 @@
 <title>So You Think You're Into Me</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   :root {
     --cream: #FAF6F0;
@@ -896,9 +897,21 @@ async function submitResults() {
     });
 
     const data = await resp.json();
-    if (data.resultsUrl) {
-      document.getElementById('ty-sub').innerHTML =
-        'Your answers have been noted. If the connection feels right, you\'ll be hearing from us soon.<br/><br/>Good things take time.';
+    if (data.resultsUrl && data.assessment) {
+      // Send email from browser via EmailJS
+      if (state.hostNotifyType === 'email' && state.hostEmail) {
+        emailjs.init('Cpk4KX1OsPDg6vqoN');
+        emailjs.send('service_xworqto', 'template_dvmluz1', {
+          to_email: state.hostEmail,
+          to_name: state.hostName,
+          from_name: "So You Think You're Into Me",
+          candidate_name: state.candidateName,
+          rating: data.assessment.rating,
+          score: data.assessment.score,
+          summary: data.assessment.summary,
+          results_url: data.resultsUrl
+        });
+      }
     }
   } catch(e) {
     console.error('Submit failed:', e);
